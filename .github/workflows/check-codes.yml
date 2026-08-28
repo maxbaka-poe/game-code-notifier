@@ -2,7 +2,12 @@ name: Check game redeem codes
 
 on:
   schedule:
+    # 毎時17分：コード確認
     - cron: "17 * * * *"
+
+    # 毎月1日 03:41 UTC（日本時間12:41）：ハートビート
+    - cron: "41 3 1 * *"
+
   workflow_dispatch:
     inputs:
       notify_all:
@@ -27,6 +32,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,22 +44,36 @@ jobs:
           TEST_WEBHOOK: ${{ inputs.test_webhook }}
         run: |
           args=()
+
           if [[ "$NOTIFY_ALL" == "true" ]]; then
             args+=(--notify-all)
           fi
+
           if [[ "$TEST_WEBHOOK" == "true" ]]; then
             args+=(--test-webhook)
           fi
+
           python3 check_codes.py "${args[@]}"
 
-      - name: Save current code list
+      - name: Monthly heartbeat
+        if: github.event_name == 'schedule' && github.event.schedule == '41 3 1 * *'
         run: |
-          if git diff --quiet -- data/seen_codes.json; then
-            echo "No code-list changes"
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > .github/heartbeat.txt
+
+      - name: Save code list and heartbeat
+        run: |
+          git add data/seen_codes.json
+
+          if [[ -f .github/heartbeat.txt ]]; then
+            git add .github/heartbeat.txt
+          fi
+
+          if git diff --cached --quiet; then
+            echo "No changes"
             exit 0
           fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/seen_codes.json
-          git commit -m "chore: update known redeem codes"
+          git commit -m "chore: update notifier state"
           git push
