@@ -193,7 +193,7 @@ def discord_payload(item: Code) -> dict[str, object]:
         description += f"\n[公式交換ページを開く]({redeem_url})"
 
     return {
-        "username": "ゲーム交換コード通知",
+        "username": "Columbina",
         "allowed_mentions": {"parse": []},
         "embeds": [
             {
@@ -223,7 +223,7 @@ def send_discord(webhook_url: str, item: Code) -> None:
 def send_test_discord(webhook_url: str) -> None:
     body = json.dumps(
         {
-            "username": "ゲーム交換コード通知",
+            "username": "Columbina",
             "content": "✅ 接続テスト成功：ゲーム交換コード通知を受信できます。",
             "allowed_mentions": {"parse": []},
         },
