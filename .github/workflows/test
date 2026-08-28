@@ -1,1 +1,59 @@
+name: Check game redeem codes
 
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+    inputs:
+      notify_all:
+        description: "現在の全コードをDiscordへ通知する"
+        required: true
+        default: false
+        type: boolean
+      test_webhook:
+        description: "Discordへ接続テストを1件送る"
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: game-code-checker
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check codes and notify Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          NOTIFY_ALL: ${{ inputs.notify_all }}
+          TEST_WEBHOOK: ${{ inputs.test_webhook }}
+        run: |
+          args=()
+          if [[ "$NOTIFY_ALL" == "true" ]]; then
+            args+=(--notify-all)
+          fi
+          if [[ "$TEST_WEBHOOK" == "true" ]]; then
+            args+=(--test-webhook)
+          fi
+          python3 check_codes.py "${args[@]}"
+
+      - name: Save current code list
+        run: |
+          if git diff --quiet -- data/seen_codes.json; then
+            echo "No code-list changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/seen_codes.json
+          git commit -m "chore: update known redeem codes"
+          git push
