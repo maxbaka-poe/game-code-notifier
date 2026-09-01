@@ -2,8 +2,9 @@ name: Publish game event calendars
 
 on:
   schedule:
+    # 6時間ごとにイベントカレンダーを更新
     - cron: "23 */6 * * *"
-    - cron: "41 3 1 * *"
+
   workflow_dispatch:
 
 concurrency:
@@ -11,7 +12,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
   pages: write
   id-token: write
 
@@ -19,22 +20,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Generate calendars
         run: python3 generate_calendars.py
-
-      - name: Monthly heartbeat
-        if: github.event_name == 'schedule' && github.event.schedule == '41 3 1 * *'
-        run: |
-          date -u +'%Y-%m-%dT%H:%M:%SZ' > .github/heartbeat.txt
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/heartbeat.txt
-          git commit -m "chore: monthly Actions heartbeat" || exit 0
-          git push
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -48,8 +40,10 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     runs-on: ubuntu-latest
     needs: build
+
     steps:
       - name: Deploy GitHub Pages
         id: deployment
