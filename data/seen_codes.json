@@ -1,4 +1,8 @@
 {
+  "endfield": [
+    "ENDFIELD4PC",
+    "ENDFIELDGIFT"
+  ],
   "genshin": [
     "2BJ64QRZ7RT8",
     "BALLETCOLLAB",
@@ -27,9 +31,5 @@
     "ZZZGRIND32",
     "ZZZINK32",
     "ZZZVOID32"
-  ],
-  "endfield": [
-    "ENDFIELD4PC",
-    "ENDFIELDGIFT"
   ]
 }
